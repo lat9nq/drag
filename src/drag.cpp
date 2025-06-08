@@ -48,12 +48,12 @@ class Bullet {
 };
 
 std::vector<Bullet> bullets{
-    Bullet{"liberator 5.5x50mm fmj", .3, 5.5, 4.5, 80, 900},
+    Bullet{"liberator 5.5x50mm FMJ", .3, 5.5, 4.5, 80, 900},
     Bullet("liberator penetrator 5.5x50mm penetrator", .3, 5.5, 4.5, 60, 1000),
     Bullet{"liberator concussive 5.5x50mm explosive", .3, 5.5, 4.5, 65, 800},
     Bullet{"tenderizer rico", .3, 8, 11, 105, 820},
     Bullet{"adjudicator battle rifle", .3, 8, 11, 95, 820},
-    Bullet{"diligence 9x70mm fmj", .3, 9.0, 20.0, 165.0, 850.0},
+    Bullet{"diligence 9x70mm FMJ", .3, 9.0, 20.0, 165.0, 850.0},
     Bullet{"diligence counter sniper 9x70mm high velocity", .3, 9, 20, 200, 940},
     Bullet{"constitution", .3, 8.0, 20.0, 180.0, 850.0},
     Bullet{"deadeye", .3, 8.0, 20.0, 300.0, 850.0},
@@ -66,7 +66,7 @@ std::vector<Bullet> bullets{
     Bullet{"breaker ie 12-gauge liberty fire", .8, 8, 2, 20, 120},
     Bullet{"breaker snp 12-gauge birdshot", .5, 3.0, 1.0, 15.0, 250.0},
     Bullet{"knight 9x20mm soft metal jacket", .6, 9, 7, 70, 375},
-    Bullet{"defender 12x25mm fmj", .6, 12, 15, 80, 285},
+    Bullet{"defender 12x25mm FMJ", .6, 12, 15, 80, 285},
     Bullet{"pummeler 12x25mm stun", .6, 12, 15, 70, 210},
     Bullet{"reprimand rhino", .6, 12, 15, 125, 285},
     Bullet{"dominator 15x100mm rocket", 0, 15, 100, 275, 180},
