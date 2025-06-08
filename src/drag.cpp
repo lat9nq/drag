@@ -75,6 +75,23 @@ std::vector<Bullet> bullets{
     Bullet{"punisher plasma bolt", 4, 20, 100, 100, 90},
     Bullet{"purifier charge", 1.5, 20, 25, 200, 350},
     Bullet{"scorcher bolt medium", 1.5, 20, 25, 100, 550},
+    Bullet{"peacemaker 9x20mm hollow point", .7, 9, 7, 75, 320},
+    Bullet{"redeemer 9x20mm FMJ", .3, 9, 7, 60, 375},
+    Bullet{"senator 13x40mm FMJ", .3, 12, 15, 200, 550},
+    Bullet{"verdict magnum", 1, 12, 15, 125, 285},
+    Bullet{"stim pistol stim", .1, 1, 1, 0, 200},
+    Bullet{"grenade pistol 40mm HEAT", 1.2, 40, 50, 250, 100},
+    Bullet{"loyalist plasma small", 1, 10, 10, 150, 550},
+    Bullet{"ultimatum 80mm HEAT", .5, 80, 500, 1000, 20},
+    Bullet{"mg-43 8x60mm FMJ", .3, 8, 11, 90, 820},
+    Bullet{"anti-materiel rifle 12.5x100mm EIT", .3, 12.5, 52, 450, 880},
+    Bullet{"heavy machine gun 12.5x100mm BCHP", .3, 12.5, 52, 150, 980},
+    Bullet{"autocannon 20mm APHET", .3, 20, 120, 260, 820},
+    Bullet{"autocannon 20mm FLAK", .3, 40, 130, 150, 820},
+    Bullet{"expendable anti-tank 75mm HEAT", 0, 75, 2500, 2000, 200},
+    Bullet{"recoilless rifle 85mm HEAT", .3, 85, 3300, 3200, 250},
+    Bullet{"recoilless rifle 85mm HE", 0, 85, 3300, 750, 250},
+    Bullet{"railgun projectile", .3, 10, 50, 600, 2000},
 };
 
 constexpr double air_density = 1.2;
