@@ -1,14 +1,15 @@
 #include <cmath>
 #include <cstdio>
+#include <limits>
 #include <string>
 #include <vector>
 
 class Bullet {
   public:
     explicit Bullet(std::string name_, double drag, double caliber_mm_, double mass_grams,
-                    double damage_, double muzzle_vel_)
+                    double damage_, double muzzle_vel_, double gravity_factor_ = 1.0)
         : name{name_}, drag_coefficient{drag}, caliber_mm{caliber_mm_}, mass{mass_grams / 1000.0},
-          damage{damage_}, muzzle_vel{muzzle_vel_} {
+          damage{damage_}, muzzle_vel{muzzle_vel_}, gravity_factor{gravity_factor_} {
         area = std::pow(caliber_mm / 2000.0, 2.0) * M_PI;
     }
     ~Bullet() = default;
@@ -45,6 +46,7 @@ class Bullet {
     double damage;
     double muzzle_vel;
     double area;
+    double gravity_factor;
 };
 
 std::vector<Bullet> bullets{
@@ -103,6 +105,7 @@ std::vector<Bullet> bullets{
     Bullet{"leveller eat-411 projectille", 0.5, 80, 500, 1000, 50},
     Bullet{"grenade launcher 40mm he grenade projectile", 1.2, 40, 50, 0, 100},
     Bullet{"apex AMW-2 P", 0.10, 60.0, 70.0, 1550, 1500},
+    Bullet{"breacher p-34 p", 2.0, 33.0, 100.0, 60, 150.0},
 };
 
 constexpr double air_density = 1.2;
@@ -118,41 +121,140 @@ double Energy(const Bullet &b, double vel) {
     return 0.5 * b.Mass() * std::pow(vel, 2);
 }
 
-void PrintBallistics(const Bullet &b, int stride = 25) {
-    const auto calc_energy = [&](double v) {
+double Radians(double degrees) {
+    return M_PI * degrees / 180.0;
+}
+
+constexpr double resolution = 1.0e-5; // seconds
+constexpr double max_travel = 200.0;  // m
+constexpr double gravity = 9.81;      // m/s^2
+
+struct {
+    double time;
+    double distance_x;
+    double distance;
+    double drop;
+    double speed;
+} typedef Ballistics;
+
+void ComputeBallistics(std::vector<Ballistics> &ballistics_table, double firing_angle_degrees,
+                       const Bullet &bullet, double stride, double max_distance = max_travel) {
+    double speed = bullet.MuzzleVel(); // meters/second
+    double angle = Radians(firing_angle_degrees);
+
+    double travelled = 0; // meters
+    double drop = 0;      // meters
+    int steps = 0;
+    double print_step = 0;
+    std::vector<double> table{};
+    while (travelled < max_distance) {
+        steps++;
+        double vel_y = speed * std::sin(angle);
+        double vel_x = speed * std::cos(angle);
+
+        double drag_force = Drag(bullet, speed);
+        double drag_accel = drag_force / bullet.Mass();
+
+        double accel_y = -drag_accel * std::sin(angle) - gravity;
+        double accel_x = -drag_accel * std::cos(angle);
+
+        double vfx = vel_x + accel_x * resolution;
+        double vfy = vel_y + accel_y * resolution;
+
+        double dist_x = (vel_x + 0.5 * accel_x * resolution) * resolution;
+        double dist_y = (vel_y + 0.5 * accel_y * resolution) * resolution;
+
+        travelled += dist_x;
+        drop += dist_y;
+
+        speed = std::sqrt(vfy * vfy + vfx * vfx);
+        angle = std::atan(vfy / vfx);
+
+        if (steps * resolution > 10.0) {
+            return;
+        }
+
+        double origin_distance = std::sqrt(travelled * travelled + drop * drop);
+
+        if (origin_distance > print_step) {
+            Ballistics entry;
+            entry.time = steps * resolution;
+            entry.distance = origin_distance;
+            entry.distance_x = travelled;
+            entry.drop = drop;
+            entry.speed = speed;
+
+            ballistics_table.push_back(entry);
+
+            print_step += stride;
+        }
+    }
+}
+
+constexpr double tolerance = 1.0e-5; // 1 mm
+
+void FindZero(std::vector<Ballistics> &table, double &angle, const Bullet &b, double distance) {
+    double delta = 1.0;
+    int attempts = 0;
+    double drop = std::numeric_limits<double>::lowest();
+    ComputeBallistics(table, angle, b, distance, distance);
+    if (table.empty()) {
+        return;
+    }
+    bool positive = (table.back().drop > 0);
+    while (std::fabs(drop) > tolerance && attempts < 100) {
+        table.clear();
+        ComputeBallistics(table, angle, b, distance, distance);
+        if (table.empty()) {
+            return;
+        }
+        drop = table.back().drop;
+        // printf("%.0fm,\t%.2fm,\t%d,\t%f\n", distance, drop, positive, angle);
+        if (drop < 0.0) {
+            if (positive) {
+                positive = false;
+                delta *= 0.5;
+            }
+            angle += delta;
+        } else {
+            if (!positive) {
+                positive = true;
+                delta *= 0.5;
+            }
+            angle -= delta;
+        }
+        attempts++;
+    }
+}
+
+void ComputeZeroAngles(const Bullet &b, double stride, double distance) {
+    std::vector<Ballistics> table{};
+    double angle{};
+    for (int i = 0; i <= distance; i += stride) {
+        FindZero(table, angle, b, i);
+        double adjacent = i * std::cos(Radians(angle));
+        double compensated_drop = i * std::sin(Radians(angle));
+        if (table.empty()) {
+            continue;
+        }
+        // printf("%dm,\t%.2f degrees,\t(%.2f,%.2f)m\n", i, angle, adjacent, compensated_drop);
+        printf("%.2f,%.2f\n", adjacent, compensated_drop);
+    }
+}
+
+void PrintBallistics(const Bullet &b, const std::vector<Ballistics> &table) {
+    const auto compute_energy = [&](double v) {
         return Energy(b, v);
         // return v;
     };
-
-    constexpr double resolution = 1.0e-6; // seconds
-    constexpr double max = 200.0;         // m
-    const double vel_0 = b.MuzzleVel();   // m/s
-    const double muzzle_energy = calc_energy(vel_0);
+    const double muzzle_energy = compute_energy(b.MuzzleVel());
     printf("%s\n", b.Name().c_str());
-    printf("SEC,\tMETERS,\tM/S,\tJOULES,\tDAMAGE\n");
+    printf("SEC,\tMETERS,\tM/S,\tJOULES,\tDAMAGE,\tDROP (M)\n");
 
-    int int_pos = 0;
-    double current_vel = vel_0;
-    u_int64_t t{};
-    for (double pos = 0.0; pos < max;) {
-        t++;
-        const double force = Drag(b, current_vel);
-        double new_vel = current_vel - force / b.Mass() * resolution;
-        pos += new_vel * resolution;
-
-        if (int_pos != std::floor(pos)) {
-            int_pos = std::floor(pos);
-            if (int_pos % stride == 0) {
-                const auto energy = calc_energy(new_vel);
-                const auto damage_proportion = new_vel / vel_0;
-                // const auto damage = std::floor(energy / muzzle_energy * b.Damage());
-                const auto damage = std::floor(damage_proportion * b.Damage());
-                std::printf("%.03f,\t%d,\t%.2f,\t%.1f,\t%.02f\n", t * resolution,
-                            static_cast<int>(std::floor(pos)), new_vel, Energy(b, new_vel),
-                            damage_proportion);
-            }
-        }
-        current_vel = new_vel;
+    for (const auto &entry : table) {
+        double energy = compute_energy(entry.speed);
+        std::printf("%.4f,\t%.2f,\t%.1f,\t%.0f,\t%.3f,\t%.3f\n", entry.time, entry.distance,
+                    entry.speed, energy, entry.speed / b.MuzzleVel(), entry.drop);
     }
 }
 
@@ -160,7 +262,9 @@ int main(int argc, char *argv[]) {
 
     if (argc == 1) {
         for (const Bullet &b : bullets) {
-            PrintBallistics(b);
+            std::vector<Ballistics> table{};
+            ComputeBallistics(table, 0, b, 25);
+            PrintBallistics(b, table);
             // exit(0);
         }
 
@@ -170,7 +274,10 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i < argc; i++) {
         for (const Bullet &b : bullets) {
             if (b.Name().find(argv[i]) != std::string::npos) {
-                PrintBallistics(b, 10);
+                ComputeZeroAngles(b, 10, 1000);
+                // std::vector<Ballistics> table{};
+                // ComputeBallistics(table, 0, b, 5);
+                // PrintBallistics(b, table);
                 break;
             }
         }
