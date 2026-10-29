@@ -51,6 +51,7 @@ class Bullet {
     double gravity_factor;
 };
 
+// Data from https://helldivers.wiki.gg
 std::vector<Bullet> bullets{
     Bullet{"liberator 5.5x50mm FMJ", .3, 5.5, 4.5, 80, 900},
     Bullet("liberator penetrator 5.5x50mm penetrator", .3, 5.5, 4.5, 60, 1000),
