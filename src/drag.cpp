@@ -109,6 +109,7 @@ std::vector<Bullet> bullets{
     Bullet{"grenade launcher 40mm he grenade projectile", 1.2, 40, 50, 0, 100},
     Bullet{"apex AMW-2 P", 0.10, 60.0, 70.0, 1550, 1500},
     Bullet{"breacher p-34 p", 2.0, 33.0, 100.0, 60, 150.0},
+    Bullet{"evictor gl-15 p", 1.2, 40.0, 50.0, 50, 100.0},
 };
 
 constexpr double air_density = 1.2;
