@@ -1,6 +1,8 @@
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <limits>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -265,10 +267,42 @@ void PrintBallistics(const Bullet &b, const std::vector<Ballistics> &table) {
 
 int main(int argc, char *argv[]) {
 
+    std::map<const char *, std::string> environment{
+        {"MAX_RANGE", {}}, {"STRIDE_DISTANCE", {}}, {"FIND_ZERO", {}}};
+
+    for (auto &var : environment) {
+        const auto &variable = var.first;
+        auto &value = var.second;
+
+        const char *env_p = std::getenv(variable);
+        if (env_p == nullptr) {
+            continue;
+        }
+        value = env_p;
+    }
+
+    u_int64_t max_travel = 200;
+    u_int64_t stride_distance = 25;
+    bool find_zero = false;
+
+    const auto &assign = [&](auto &variable, const char *name) {
+        if (!environment.contains(name)) {
+            return;
+        }
+        if (environment.at(name).empty()) {
+            return;
+        }
+        variable = std::stoul(environment.at(name));
+    };
+
+    assign(max_travel, "MAX_RANGE");
+    assign(stride_distance, "STRIDE_DISTANCE");
+    assign(find_zero, "FIND_ZERO");
+
     if (argc == 1) {
         for (const Bullet &b : bullets) {
             std::vector<Ballistics> table{};
-            ComputeBallistics(table, 0, b, 25);
+            ComputeBallistics(table, 0, b, stride_distance, max_travel);
             PrintBallistics(b, table);
             // exit(0);
         }
@@ -279,10 +313,13 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i < argc; i++) {
         for (const Bullet &b : bullets) {
             if (b.Name().find(argv[i]) != std::string::npos) {
-                ComputeZeroAngles(b, 10, 1000);
-                // std::vector<Ballistics> table{};
-                // ComputeBallistics(table, 0, b, 5);
-                // PrintBallistics(b, table);
+                if (find_zero) {
+                    ComputeZeroAngles(b, stride_distance, max_travel);
+                } else {
+                    std::vector<Ballistics> table{};
+                    ComputeBallistics(table, 0, b, stride_distance, max_travel);
+                    PrintBallistics(b, table);
+                }
                 break;
             }
         }
