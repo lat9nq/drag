@@ -230,6 +230,7 @@ void FindZero(std::vector<Ballistics> &table, double &angle, const Bullet &b, do
 void ComputeZeroAngles(const Bullet &b, double stride, double distance) {
     std::vector<Ballistics> table{};
     double angle{};
+    double last_travel = std::numeric_limits<double>::lowest();
     for (int i = 0; i <= distance; i += stride) {
         FindZero(table, angle, b, i);
         double adjacent = i * std::cos(Radians(angle));
@@ -238,6 +239,10 @@ void ComputeZeroAngles(const Bullet &b, double stride, double distance) {
             continue;
         }
         // printf("%dm,\t%.2f degrees,\t(%.2f,%.2f)m\n", i, angle, adjacent, compensated_drop);
+        if (adjacent < last_travel) {
+            break;
+        }
+        last_travel = adjacent;
         printf("%.2f,%.2f\n", adjacent, compensated_drop);
     }
 }
